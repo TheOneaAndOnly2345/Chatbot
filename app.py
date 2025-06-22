@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify, render_template
 import google.generativeai as genai
 
 app = Flask(__name__)
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+genai.configure(api_key=os.getenv("AIzaSyDp5rrkwa7ndx9nbSUK_ltwKd-znQsYiuE"))
 model = genai.GenerativeModel("gemini-1.5-flash")
 chat = model.start_chat(history=[])
 
@@ -21,5 +21,7 @@ def chat_endpoint():
     except Exception as e:
         return jsonify({"reply": f"Error: {str(e)}"}), 500
 
+# ✅ This is the ONLY part changed for deployment:
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
