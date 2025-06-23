@@ -18,7 +18,7 @@ def chat_endpoint():
     data = request.get_json()
     user_input = data.get("message", "")
 
-    banned_words = ["nigger", "nigga", "Nigga", "Nigger"]  
+    banned_words = ["nigger", "nigga", "Nigga", "Nigger", "nga", "Nga"]  
 
     try:
         response = chat.send_message(user_input)
