@@ -1,31 +1,38 @@
-import os
 from flask import Flask, request, jsonify, render_template
 import google.generativeai as genai
+import os
+import base64
 
 app = Flask(__name__)
-
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-1.5-flash")  # supports images
 chat = model.start_chat(history=[])
 
-@app.route("/")
+@app.route("/nigganigganigga")
 def index():
     return render_template("index.html")
 
 @app.route("/chat", methods=["POST"])
 def chat_endpoint():
-    data = request.get_json()
-    user_input = data.get("message", "")
-
-    banned_words = ["nigger", "nigga", "Nigga", "Nigger", "nga", "Nga"]  
+    user_input = request.form.get("message", "")
+    image = request.files.get("image")
 
     try:
-        response = chat.send_message(user_input)
-        reply_text = response.text.lower()
+        if image:
+            # Encode image as base64
+            image_data = base64.b64encode(image.read()).decode("utf-8")
+            mime_type = image.mimetype  # "image/png" or "image/jpeg"
 
-        if any(banned_word in reply_text for banned_word in banned_words):
-            return jsonify({"reply": "I'm sorry, that is not within the TOS that I have not mentioned before."})
+            # Build the message in Gemini inline_data format
+            parts = []
+            if user_input:
+                parts.append({"text": user_input})
+            parts.append({"inline_data": {"mime_type": mime_type, "data": image_data}})
+
+            response = chat.send_message([{"role": "user", "parts": parts}])
+        else:
+            response = chat.send_message(user_input)
 
         return jsonify({"reply": response.text})
 

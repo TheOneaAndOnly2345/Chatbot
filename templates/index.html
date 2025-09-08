@@ -29,6 +29,7 @@
       padding: 10px;
       border-radius: 8px;
       max-width: 80%;
+      word-wrap: break-word;
     }
     .user {
       background: #d1e7dd;
@@ -42,6 +43,8 @@
       width: 90%;
       max-width: 600px;
       display: flex;
+      align-items: center;
+      gap: 8px;
     }
     input[type="text"] {
       flex: 1;
@@ -50,9 +53,11 @@
       border: 1px solid #ccc;
       font-size: 16px;
     }
+    input[type="file"] {
+      font-size: 14px;
+    }
     button {
       padding: 10px;
-      margin-left: 10px;
       border: none;
       background: #007bff;
       color: white;
@@ -67,26 +72,37 @@
   <div id="chat-box"></div>
   <div id="input-area">
     <input type="text" id="user-input" placeholder="Type your message..." />
+    <input type="file" id="image-input" accept="image/*" />
     <button onclick="sendMessage()">Send</button>
+    <button onclick="startVoiceInput()">🎤</button>
   </div>
 
   <script>
     async function sendMessage() {
       const input = document.getElementById('user-input');
+      const imageInput = document.getElementById('image-input');
       const message = input.value.trim();
-      if (!message) return;
 
-      appendMessage(message, 'user');
+      if (!message && !imageInput.files.length) return;
+
+      appendMessage(message || "[Image sent]", 'user');
       input.value = '';
+
+      const formData = new FormData();
+      formData.append("message", message);
+      if (imageInput.files.length > 0) {
+        formData.append("image", imageInput.files[0]);
+      }
 
       const response = await fetch('/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message }),
+        body: formData
       });
 
       const data = await response.json();
       appendMessage(data.reply, 'gemini');
+
+      imageInput.value = ''; // clear file input
     }
 
     function appendMessage(text, sender) {
@@ -96,6 +112,33 @@
       messageDiv.textContent = text;
       chatBox.appendChild(messageDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Speech-to-text
+    let recognition;
+    if ("webkitSpeechRecognition" in window) {
+      recognition = new webkitSpeechRecognition();
+      recognition.continuous = true;       // keep listening
+      recognition.interimResults = true;   // show words as they're spoken
+      recognition.lang = "en-US";
+
+      recognition.onresult = function(event) {
+        let transcript = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        document.getElementById("user-input").value = transcript;
+      };
+
+      recognition.onerror = function(event) {
+        console.error("Speech recognition error:", event.error);
+      };
+    } else {
+      alert("Your browser doesn't support Speech Recognition. Try Chrome.");
+    }
+
+    function startVoiceInput() {
+      if (recognition) recognition.start();
     }
   </script>
 </body>
