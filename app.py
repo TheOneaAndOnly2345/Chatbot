@@ -7,7 +7,7 @@ import json
 import time
 
 app = Flask(__name__)
-genai.configure(api_key=os.getenv("AIzaSyBxdmmCHhSV-ZNmTP8FJY43uzLgsK_vR1Q"))
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 model = genai.GenerativeModel("gemini-flash-latest")
   # supports images
